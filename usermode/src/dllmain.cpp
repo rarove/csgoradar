@@ -29,6 +29,9 @@ bool main()
     bool connected = false;
     bool failed = false;
 
+    // Randomized initial delay to avoid fingerprinting on connect
+    std::this_thread::sleep_for(std::chrono::milliseconds(50 + rand() % 100));
+
     web_socket.setUrl(formatted_address);
     web_socket.setOnMessageCallback([&](const ix::WebSocketMessagePtr& msg)
     {
@@ -70,7 +73,9 @@ bool main()
         f::run();
         web_socket.send(f::m_data.dump());
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        const int jitter = 20; // ±20ms jitter
+        const auto delay = 100_ms + std::chrono::milliseconds(rand() % (jitter * 2) - jitter);
+        std::this_thread::sleep_for(delay);
     }
 
     return true;
