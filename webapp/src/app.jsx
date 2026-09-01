@@ -111,7 +111,7 @@ const App = () => {
     };
     connect();
     return () => { cancelled = true; clearTimeout(timeout); if (demoTimer) clearInterval(demoTimer); try { ws && ws.close(); } catch {} };
-  }, []);
+  }, [authorized]);
 
   if (PRIVATE_KEY && !authorized) {
     return (
@@ -151,13 +151,18 @@ const App = () => {
             {playerArray.filter((p) => p.m_team == 3).map((player) => (<PlayerCard isOnRightSide={true} key={player.m_idx} playerData={player} settings={settings} />))}
           </ul>
         </div>
-        <div className="lg:hidden flex flex-col gap-2 mt-2 max-h-[22vh] overflow-y-auto">
+        <div className="lg:hidden flex flex-col gap-2 mt-2 max-h-[26vh] overflow-y-auto">
           <div className="flex gap-2 overflow-x-auto pb-1 px-2">
             {playerArray.filter(p=>p.m_team==2).map(p=>(
-              <div key={p.m_idx} className="flex items-center gap-2 shrink-0 bg-black/40 rounded-lg px-2 py-1.5 text-xs border border-white/10">
-                <img src={`./assets/characters/${p.m_model_name||'tm_phoenix'}.png`} className="w-8 h-8 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
-                <div className="flex flex-col leading-none">
-                  <span className="font-medium">{p.m_name}{p.m_is_local?' ★':''}</span><span className="opacity-60 text-[10px]">{p.m_health}hp • ${p.m_money||0}</span>
+              <div key={p.m_idx} className="flex items-center gap-2 shrink-0 bg-black/40 rounded-lg px-2 py-1.5 text-xs border border-white/10 min-w-[140px]">
+                <img src={`./assets/characters/${p.m_model_name||'tm_phoenix'}.png`} className="w-9 h-9 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                <div className="flex flex-col leading-none flex-1">
+                  <span className="font-medium truncate">{p.m_name}{p.m_is_local?' ★':''}</span><span className="opacity-60 text-[10px]">{p.m_health}hp • ${p.m_money||0}</span>
+                  <div className="flex gap-1 mt-1">
+                    {p.m_weapons?.m_primary && <span className="text-[9px] px-1 rounded bg-white/10">{p.m_weapons.m_primary}</span>}
+                    {p.m_weapons?.m_secondary && <span className="text-[9px] px-1 rounded bg-white/10">{p.m_weapons.m_secondary}</span>}
+                    {p.m_has_bomb && <span className="text-[9px] px-1 rounded bg-yellow-500/20 text-yellow-300">C4</span>}
+                  </div>
                 </div>
                 <span className="w-2 h-2 rounded-full ml-1" style={{background: p.m_is_local?'#facc15':'#ef4444'}}></span>
               </div>
@@ -165,10 +170,15 @@ const App = () => {
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 px-2">
             {playerArray.filter(p=>p.m_team==3).map(p=>(
-              <div key={p.m_idx} className="flex items-center gap-2 shrink-0 bg-black/40 rounded-lg px-2 py-1.5 text-xs border border-white/10">
-                <img src={`./assets/characters/${p.m_model_name||'ctm_sas'}.png`} className="w-8 h-8 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
-                <div className="flex flex-col leading-none">
-                  <span className="font-medium">{p.m_name}{p.m_is_local?' ★':''}</span><span className="opacity-60 text-[10px]">{p.m_health}hp • ${p.m_money||0}</span>
+              <div key={p.m_idx} className="flex items-center gap-2 shrink-0 bg-black/40 rounded-lg px-2 py-1.5 text-xs border border-white/10 min-w-[140px]">
+                <img src={`./assets/characters/${p.m_model_name||'ctm_sas'}.png`} className="w-9 h-9 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                <div className="flex flex-col leading-none flex-1">
+                  <span className="font-medium truncate">{p.m_name}{p.m_is_local?' ★':''}</span><span className="opacity-60 text-[10px]">{p.m_health}hp • ${p.m_money||0}</span>
+                  <div className="flex gap-1 mt-1">
+                    {p.m_weapons?.m_primary && <span className="text-[9px] px-1 rounded bg-white/10">{p.m_weapons.m_primary}</span>}
+                    {p.m_weapons?.m_secondary && <span className="text-[9px] px-1 rounded bg-white/10">{p.m_weapons.m_secondary}</span>}
+                    {p.m_has_defuser && <span className="text-[9px] px-1 rounded bg-blue-500/20 text-blue-300">kit</span>}
+                  </div>
                 </div>
                 <span className="w-2 h-2 rounded-full ml-1" style={{background: p.m_is_local?'#facc15':'#22c55e'}}></span>
               </div>
