@@ -25,4 +25,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: usermode
-          path: usermode/x64/Release/usermode.exe
+          path: |
+            usermode/release/usermode.exe
+            usermode/**/usermode.exe
