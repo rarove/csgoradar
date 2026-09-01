@@ -35,3 +35,7 @@ body {
 }
 #terrorist, #counterTerrorist { scrollbar-width: none; -ms-overflow-style: none; }
 #terrorist::-webkit-scrollbar, #counterTerrorist::-webkit-scrollbar { display: none; }
+@media (orientation: landscape) and (max-height: 500px) {
+  #radar { max-width: 68vh !important; max-height: 68vh !important; }
+  #terrorist, #counterTerrorist { scale: 0.35 !important; }
+}
