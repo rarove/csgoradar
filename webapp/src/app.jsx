@@ -150,20 +150,36 @@ const App = () => {
             {playerArray.filter((p) => p.m_team == 3).map((player) => (<PlayerCard isOnRightSide={true} key={player.m_idx} playerData={player} settings={settings} />))}
           </ul>
         </div>
-        <div className="sm:hidden flex flex-col gap-1 mt-2 max-h-[28vh] overflow-y-auto">
-          <div className="flex gap-1.5 overflow-x-auto px-1 pb-1">
+        <div className="sm:hidden flex flex-col gap-1.5 mt-2 max-h-[32vh] overflow-y-auto">
+          <div className="flex gap-1.5 overflow-x-auto px-1 pb-1 snap-x">
             {playerArray.filter(p=>p.m_team==2).map(p=>(
-              <div key={p.m_idx} className="flex items-center gap-1.5 shrink-0 bg-black/40 rounded-lg px-2 py-1 text-[11px] border border-white/10">
-                <img src={`./assets/characters/${p.m_model_name||'tm_phoenix'}.png`} className="w-7 h-7 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
-                <span className="truncate max-w-[70px]">{p.m_name}{p.m_is_local?' ★':''}</span>
+              <div key={p.m_idx} className="flex items-center gap-1.5 shrink-0 bg-black/50 rounded-lg px-2 py-1.5 text-[11px] border border-white/10 min-w-[150px] snap-start">
+                <img src={`./assets/characters/${p.m_model_name||'tm_phoenix'}.png`} className="w-8 h-8 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                <div className="flex flex-col leading-none flex-1 min-w-0">
+                  <span className="font-medium truncate">{p.m_name}{p.m_is_local?' ★':''}</span>
+                  <span className="opacity-60 text-[10px]">{p.m_health}hp • ${p.m_money||0}</span>
+                  <div className="flex gap-1 mt-0.5 flex-wrap">
+                    {p.m_weapons?.m_primary && <span className="text-[8px] px-1 rounded bg-white/10 truncate max-w-[60px]">{p.m_weapons.m_primary}</span>}
+                    {p.m_weapons?.m_secondary && <span className="text-[8px] px-1 rounded bg-white/10">{p.m_weapons.m_secondary}</span>}
+                    {p.m_has_bomb && <span className="text-[8px] px-1 rounded bg-yellow-500/20 text-yellow-300">C4</span>}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-          <div className="flex gap-1.5 overflow-x-auto px-1 pb-1">
+          <div className="flex gap-1.5 overflow-x-auto px-1 pb-1 snap-x">
             {playerArray.filter(p=>p.m_team==3).map(p=>(
-              <div key={p.m_idx} className="flex items-center gap-1.5 shrink-0 bg-black/40 rounded-lg px-2 py-1 text-[11px] border border-white/10">
-                <img src={`./assets/characters/${p.m_model_name||'ctm_sas'}.png`} className="w-7 h-7 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
-                <span className="truncate max-w-[70px]">{p.m_name}{p.m_is_local?' ★':''}</span>
+              <div key={p.m_idx} className="flex items-center gap-1.5 shrink-0 bg-black/50 rounded-lg px-2 py-1.5 text-[11px] border border-white/10 min-w-[150px] snap-start">
+                <img src={`./assets/characters/${p.m_model_name||'ctm_sas'}.png`} className="w-8 h-8 object-contain bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                <div className="flex flex-col leading-none flex-1 min-w-0">
+                  <span className="font-medium truncate">{p.m_name}{p.m_is_local?' ★':''}</span>
+                  <span className="opacity-60 text-[10px]">{p.m_health}hp • ${p.m_money||0}</span>
+                  <div className="flex gap-1 mt-0.5 flex-wrap">
+                    {p.m_weapons?.m_primary && <span className="text-[8px] px-1 rounded bg-white/10 truncate max-w-[60px]">{p.m_weapons.m_primary}</span>}
+                    {p.m_weapons?.m_secondary && <span className="text-[8px] px-1 rounded bg-white/10">{p.m_weapons.m_secondary}</span>}
+                    {p.m_has_defuser && <span className="text-[8px] px-1 rounded bg-blue-500/20 text-blue-300">kit</span>}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
