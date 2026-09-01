@@ -150,16 +150,31 @@ const App = () => {
             {playerArray.filter((p) => p.m_team == 3).map((player) => (<PlayerCard isOnRightSide={true} key={player.m_idx} playerData={player} settings={settings} />))}
           </ul>
         </div>
-        <div className="sm:hidden grid grid-cols-3 gap-1 mt-2 px-1">
-          {playerArray.map(p=>(
-            <div key={p.m_idx} className="flex items-center gap-1 bg-black/40 rounded-md px-1.5 py-1 text-[10px] border border-white/10 overflow-hidden">
-              <img src={`./assets/characters/${p.m_model_name||(p.m_team==2?'tm_phoenix':'ctm_sas')}.png`} className="w-6 h-6 object-contain shrink-0 bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
-              <div className="flex flex-col leading-none min-w-0 flex-1">
-                <span className="font-medium truncate text-[10px]">{p.m_name}{p.m_is_local?' ★':''}</span>
-                <span className="opacity-60 text-[8px]">{p.m_health}hp • ${p.m_money||0}</span>
+        <div className="sm:hidden flex flex-col gap-1.5 mt-2 px-1 max-h-[32vh] overflow-y-auto">
+          <div className="text-[9px] opacity-50 px-1">T — {playerArray.filter(p=>p.m_team==2).length}</div>
+          <div className="grid grid-cols-3 gap-1">
+            {playerArray.filter(p=>p.m_team==2).map(p=>(
+              <div key={p.m_idx} className="flex items-center gap-1 bg-black/40 rounded-md px-1.5 py-1 text-[10px] border border-white/10 overflow-hidden">
+                <img src={`./assets/characters/${p.m_model_name||'tm_phoenix'}.png`} className="w-6 h-6 object-contain shrink-0 bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                <div className="flex flex-col leading-none min-w-0 flex-1">
+                  <span className="font-medium truncate text-[10px]">{p.m_name}{p.m_is_local?' ★':''}</span>
+                  <span className="opacity-60 text-[8px]">{p.m_health}hp</span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="text-[9px] opacity-50 px-1 mt-1">CT — {playerArray.filter(p=>p.m_team==3).length}</div>
+          <div className="grid grid-cols-3 gap-1">
+            {playerArray.filter(p=>p.m_team==3).map(p=>(
+              <div key={p.m_idx} className="flex items-center gap-1 bg-black/40 rounded-md px-1.5 py-1 text-[10px] border border-white/10 overflow-hidden">
+                <img src={`./assets/characters/${p.m_model_name||'ctm_sas'}.png`} className="w-6 h-6 object-contain shrink-0 bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                <div className="flex flex-col leading-none min-w-0 flex-1">
+                  <span className="font-medium truncate text-[10px]">{p.m_name}{p.m_is_local?' ★':''}</span>
+                  <span className="opacity-60 text-[8px]">{p.m_health}hp</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
