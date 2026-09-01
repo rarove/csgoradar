@@ -1,0 +1,43 @@
+name: update-offsets
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch latest offsets
+        run: |
+          curl -s https://raw.githubusercontent.com/a2x/cs2-dumper/main/output/offsets.json -o /tmp/offsets.json
+          cp /tmp/offsets.json usermode/offsets.json
+          python3 -c "
+          import json
+          j=json.load(open('/tmp/offsets.json'))
+          c=j['client.dll']
+          out=f'''#pragma once
+          #include <cstdint>
+          namespace offsets {{
+          constexpr uintptr_t dwEntityList = {c['dwEntityList']};
+          constexpr uintptr_t dwGameEntitySystem = {c.get('dwGameEntitySystem', c['dwEntityList'])};
+          constexpr uintptr_t dwGlobalVars = {c['dwGlobalVars']};
+          constexpr uintptr_t dwLocalPlayerController = {c['dwLocalPlayerController']};
+          constexpr uintptr_t dwLocalPlayerPawn = {c['dwLocalPlayerPawn']};
+          constexpr uintptr_t dwPlantedC4 = {c['dwPlantedC4']};
+          constexpr uintptr_t dwViewMatrix = {c['dwViewMatrix']};
+          constexpr uintptr_t dwViewAngles = {c['dwViewAngles']};
+          constexpr uintptr_t dwWeaponC4 = {c['dwWeaponC4']};
+          }}
+          '''
+          open('usermode/src/utils/offsets.hpp','w').write(out)
+          print(out)
+          "
+      - name: Commit if changed
+        run: |
+          if git diff --quiet; then echo "no changes"; exit 0; fi
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add usermode/offsets.json usermode/src/utils/offsets.hpp
+          git commit -m "chore: auto-update offsets $(date -u +%Y-%m-%d)"
+          git push

@@ -13,8 +13,8 @@ const Radar = ({
   const radarImageRef = useRef();
 
   return (
-    <div id="radar" className={`relative overflow-hidden origin-center`}>
-      <img ref={radarImageRef} className={`w-full h-auto`} src={radarImage} />
+    <div id="radar" className={`relative overflow-hidden origin-center w-full max-w-[72vh] xl:max-w-[78vh] aspect-square`}>
+      <img ref={radarImageRef} className={`w-full h-full object-contain`} src={radarImage} />
 
       {playerArray.map((player) => (
         <Player

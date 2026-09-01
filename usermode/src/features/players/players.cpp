@@ -13,6 +13,7 @@ bool f::players::get_data(int32_t idx, c_cs_player_controller* player, c_cs_play
 	m_player_data["m_team"] = team;
 	m_player_data["m_health"] = health;
 	m_player_data["m_is_dead"] = is_dead;
+	m_player_data["m_is_local"] = (player == sdk::m_local_controller);
 	m_player_data["m_model_name"] = player_pawn->get_model_name();
 	m_player_data["m_steam_id"] = std::to_string(player->m_steamID());
 	m_player_data["m_money"] = player->m_pInGameMoneyServices()->m_iAccount();
