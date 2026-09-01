@@ -18,8 +18,10 @@ const Player = ({ playerData, mapData, radarImage, localTeam, settings }) => {
   const playerBounding = (playerRef.current && playerRef.current.getBoundingClientRect()) || { width: 0, height: 0 };
   const playerRotation = calculatePlayerRotation(playerData);
   const radarImageBounding = (radarImage !== undefined && radarImage.getBoundingClientRect()) || { width: 0, height: 0 };
-  const scaledSize = 1.1 * settings.dotSize;
   const isLocal = !!playerData.m_is_local;
+  const base = settings.dotSize;
+  const scaledSize = Math.max(0.9, 1.1 * base);
+  const nameSize = Math.max(9, 6 + base * 3.2);
   const displayName = playerData.m_name || "";
 
   useEffect(() => {
@@ -34,31 +36,30 @@ const Player = ({ playerData, mapData, radarImage, localTeam, settings }) => {
   };
 
   return (
-    <div className={`absolute origin-center rounded-[100%] left-0 top-0`} ref={playerRef}
+    <div className={`absolute origin-center left-0 top-0`} ref={playerRef}
       style={{
-        width: `${scaledSize}vw`, height: `${scaledSize}vw`,
+        width: `${scaledSize}vmin`, height: `${scaledSize}vmin`,
         transform: `translate(${radarImageTranslation.x}px, ${radarImageTranslation.y}px)`,
-        transition: `transform 100ms linear`,
+        transition: `transform 80ms linear`,
         zIndex: `${(playerData.m_is_dead && `0`) || `1`}`,
         WebkitMask: `${(playerData.m_is_dead && `url('./assets/icons/icon-enemy-death_png.png') no-repeat center / contain`) || `none`}`,
       }}>
       <div style={{
         transform: `rotate(${(playerData.m_is_dead && `0`) || playerRotation}deg)`,
-        width: `${scaledSize}vw`, height: `${scaledSize}vw`,
-        transition: `transform 100ms linear`,
+        width: `${scaledSize}vmin`, height: `${scaledSize}vmin`,
+        transition: `transform 80ms linear`,
         opacity: `${(playerData.m_is_dead && `0.8`) || (invalidPosition && `0`) || `1`}`,
       }}>
-        <div className={`w-full h-full rounded-[50%_50%_50%_0%] rotate-[315deg] ${isLocal ? `ring-2 ring-yellow-300 ring-offset-1 ring-offset-transparent` : ``}`}
+        <div className={`w-full h-full rounded-[50%_50%_50%_0%] rotate-[315deg] ${isLocal ? `ring-2 ring-yellow-300` : ``}`}
           style={{
             backgroundColor: `${isLocal ? `#facc15` : (playerData.m_team == localTeam && playerColors[playerData.m_color]) || `red`}`,
-            opacity: `${(playerData.m_is_dead && `0.8`) || (invalidPosition && `0`) || `1`}`,
-            boxShadow: isLocal ? `0 0 8px 2px rgba(250,204,21,0.9)` : `none`,
+            boxShadow: isLocal ? `0 0 10px 2px rgba(250,204,21,0.9)` : `0 0 3px rgba(0,0,0,0.6)`,
           }}
         />
       </div>
-      <div className="absolute left-1/2 -translate-x-1/2 text-[0.55vw] leading-none px-1 py-0.5 rounded bg-black/70 text-white whitespace-nowrap pointer-events-none"
-        style={{ top: `${scaledSize}vw`, marginTop: `2px`, fontWeight: isLocal ? 700 : 400 }}>
-        {displayName}{isLocal ? ` ★SEN` : ``}
+      <div className="absolute left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/85 text-white whitespace-nowrap pointer-events-none border border-white/15 text-center"
+        style={{ top: `${scaledSize}vmin`, marginTop: `4px`, fontSize: `${nameSize}px`, lineHeight: 1, fontWeight: isLocal ? 800 : 600 }}>
+        {displayName}{isLocal ? ` ★` : ``}
       </div>
     </div>
   );

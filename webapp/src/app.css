@@ -33,3 +33,5 @@ body {
 .banner-link:hover {
   box-shadow: 0px 2.5px 0 0 #1E3A54;
 }
+#terrorist, #counterTerrorist { scrollbar-width: none; -ms-overflow-style: none; }
+#terrorist::-webkit-scrollbar, #counterTerrorist::-webkit-scrollbar { display: none; }

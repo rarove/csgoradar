@@ -5,7 +5,7 @@ import Radar from "./components/radar";
 import SettingsButton from "./components/settings";
 import MaskedIcon from "./components/maskedicon";
 
-const CONNECTION_TIMEOUT = 5000;
+const CONNECTION_TIMEOUT = 2500;
 const WS_URL = import.meta.env.VITE_WS_URL || "";
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
 const PRIVATE_KEY = (import.meta.env.VITE_PRIVATE_KEY || "").trim();
@@ -76,28 +76,14 @@ const App = () => {
     let cancelled = false;
 
     const startDemo = async (msg) => {
-      if (msg) setStatus(msg);
-      else if (!authorized) setStatus("Gizli mod - yetkisiz, demo gösteriliyor");
-      else if (!DEMO_MODE) setStatus("Demo kapalı");
-      else setStatus("Demo modu - Canlı bekleniyor");
-      try {
-        const map = MOCK_DATA.m_map;
-        const data = await (await fetch(`data/${map}/data.json`)).json();
-        if (cancelled) return;
-        setMapData({ ...data, name: map });
-        document.body.style.backgroundImage = `url(./data/${map}/background.png)`;
-        setPlayerArray(MOCK_DATA.m_players);
-        setLocalTeam(MOCK_DATA.m_local_team);
-        setBombData(MOCK_DATA.m_bomb);
-        let tick = 0;
-        demoTimer = setInterval(() => {
-          tick += 0.05;
-          setPlayerArray(prev => prev.map(p => ({
-            ...p,
-            m_position: { ...p.m_position, x: p.m_position.x + Math.sin(tick + p.m_idx) * 2, y: p.m_position.y + Math.cos(tick + p.m_idx) * 2 }
-          })));
-        }, 100);
-      } catch (e) { console.error(e); }
+      if (!authorized) {
+        setStatus("Gizli");
+        setPlayerArray([]); setMapData(null);
+        return;
+      }
+      if (msg) setStatus(msg); else setStatus("Canlı bekleniyor - oyuna gir...");
+      setPlayerArray([]); setMapData(null);
+      if (!DEMO_MODE) return;
     };
 
     const connect = async () => {
@@ -106,20 +92,20 @@ const App = () => {
       if (!url) { startDemo(); return; }
       try { ws = new WebSocket(url); } catch (e) { startDemo(`Bağlantı hatası: ${e.message}`); return; }
       timeout = setTimeout(() => { try { ws.close(); } catch {} startDemo("Zaman aşımı - demo"); }, CONNECTION_TIMEOUT);
-      ws.onopen = () => { clearTimeout(timeout); setStatus("Canlı"); if (demoTimer) { clearInterval(demoTimer); demoTimer = null; } };
-      ws.onclose = () => { clearTimeout(timeout); if (playerArray.length === 0) startDemo(); };
-      ws.onerror = () => { clearTimeout(timeout); startDemo(`WS bağlanamadı: ${url}`); };
+      ws.onopen = () => { clearTimeout(timeout); setStatus("Canlı - veri bekleniyor..."); if (demoTimer) { clearInterval(demoTimer); demoTimer = null; } };
+      ws.onclose = () => { clearTimeout(timeout); setStatus("Bağlantı koptu"); setTimeout(()=>{ if(!cancelled) connect(); }, 800); };
+      ws.onerror = () => { clearTimeout(timeout); setStatus(`WS hata`); };
       ws.onmessage = async (event) => {
         const parsed = JSON.parse(await event.data.text());
         setPlayerArray(parsed.m_players);
         setLocalTeam(parsed.m_local_team);
         setBombData(parsed.m_bomb);
         const map = parsed.m_map;
-        if (map !== "invalid") {
-          const jd = await (await fetch(`data/${map}/data.json`)).json();
-          setMapData({ ...jd, name: map });
-          document.body.style.backgroundImage = `url(./data/${map}/background.png)`;
-        }
+        if (map && map !== "invalid") {
+          if (!mapData || mapData.name !== map) {
+            try { const jd = await (await fetch(`data/${map}/data.json`)).json(); setMapData({ ...jd, name: map }); document.body.style.backgroundImage = `url(./data/${map}/background.png)`; } catch {}
+          }
+        } else { setMapData(null); }
         setStatus("Canlı");
       };
     };
@@ -152,21 +138,21 @@ const App = () => {
         {bombData && bombData.m_blow_time > 0 && !bombData.m_is_defused && (
           <div className="absolute left-1/2 top-2 flex-col items-center gap-1 z-50"><div className="flex justify-center items-center gap-1"><MaskedIcon path={`./assets/icons/c4_sml.png`} height={32} color={(bombData.m_is_defusing && bombData.m_blow_time - bombData.m_defuse_time > 0 && `bg-radar-green`) || (bombData.m_blow_time - bombData.m_defuse_time < 0 && `bg-radar-red`) || `bg-radar-secondary`} /><span>{`${bombData.m_blow_time.toFixed(1)}s ${(bombData.m_is_defusing && `(${bombData.m_defuse_time.toFixed(1)}s)`) || ""}`}</span></div></div>
         )}
-        <div className="flex items-center justify-center gap-1 lg:gap-2 w-full max-w-[1850px] mx-auto h-full">
-          <ul id="terrorist" className="hidden xl:flex flex-col gap-2 m-0 p-0 shrink-0 scale-[0.70] origin-center max-h-[92vh] overflow-y-auto overflow-x-hidden">
+        <div className="flex items-center justify-center gap-0 w-full h-full max-h-[92vh] overflow-hidden">
+          <ul id="terrorist" className="hidden 2xl:flex flex-col gap-1 m-0 p-0 shrink-0 scale-[0.62] origin-center overflow-hidden">
             {playerArray.filter((p) => p.m_team == 2).map((player) => (<PlayerCard isOnRightSide={false} key={player.m_idx} playerData={player} />))}
           </ul>
-          <div className="flex-1 flex justify-center items-center min-w-0 h-full">
+          <div className="flex-1 flex justify-center items-center min-w-0 h-full overflow-hidden">
           {(playerArray.length > 0 && mapData && (<Radar playerArray={playerArray} radarImage={`./data/${mapData.name}/radar.png`} mapData={mapData} localTeam={localTeam} bombData={bombData} settings={settings} />)) || (
-            <div id="radar" className="relative overflow-hidden origin-center text-center p-4"><h1 className="radar_message text-lg">{status}</h1><p className="text-sm opacity-60 mt-2 max-w-md">{!authorized ? `Gizli radar - ?k=${PRIVATE_KEY} ile gir` : `Demo`}</p></div>
+            <div id="radar" className="text-center p-6"><h1 className="text-lg">{status}</h1><p className="text-sm opacity-50 mt-1">Oyuna gir ve usermode.exe çalışsın</p></div>
           )}
           </div>
-          <ul id="counterTerrorist" className="hidden xl:flex flex-col gap-2 m-0 p-0 shrink-0 scale-[0.70] origin-center max-h-[92vh] overflow-y-auto overflow-x-hidden">
+          <ul id="counterTerrorist" className="hidden 2xl:flex flex-col gap-1 m-0 p-0 shrink-0 scale-[0.62] origin-center overflow-hidden">
             {playerArray.filter((p) => p.m_team == 3).map((player) => (<PlayerCard isOnRightSide={true} key={player.m_idx} playerData={player} settings={settings} />))}
           </ul>
         </div>
-        <div className="xl:hidden flex justify-center gap-2 mt-2 text-[11px] opacity-60">
-          <span>{playerArray.filter(p=>p.m_team==2).length}T</span><span>•</span><span>{playerArray.filter(p=>p.m_team==3).length}CT</span><span>• {mapData?.name||""}</span>
+        <div className="2xl:hidden flex justify-center gap-3 mt-1 text-[10px] opacity-50">
+          <span>{playerArray.filter(p=>p.m_team==2).length}T</span><span>•</span><span>{playerArray.filter(p=>p.m_team==3).length}CT</span><span>• {mapData?.name||status}</span>
         </div>
       </div>
     </div>
