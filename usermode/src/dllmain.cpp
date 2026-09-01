@@ -11,10 +11,17 @@ bool main()
     ix::initNetSystem();
     LOG_INFO("winsock initialization completed");
 
+    std::string ip = config_data.m_ip;
+    ip.erase(0, ip.find_first_not_of(" \t\r\n"));
+    ip.erase(ip.find_last_not_of(" \t\r\n")+1);
     std::string formatted_address;
-    if (config_data.m_ip.rfind("ws://",0)==0 || config_data.m_ip.rfind("wss://",0)==0) formatted_address = config_data.m_ip;
-    else if (config_data.m_ip.find(".onrender.com")!=std::string::npos || config_data.m_ip.find("ngrok")!=std::string::npos) formatted_address = std::format("wss://{}/cs2_webradar", config_data.m_ip);
-    else formatted_address = std::format("ws://{}:22006/cs2_webradar", config_data.m_ip);
+    if (ip.rfind("ws://",0)==0 || ip.rfind("wss://",0)==0) formatted_address = ip;
+    else if (ip.find("onrender.com")!=std::string::npos || ip.find("ngrok")!=std::string::npos) {
+        if (ip.find("/cs2_webradar")!=std::string::npos) formatted_address = std::format("wss://{}", ip.starts_with("https://")?ip.substr(8):ip.starts_with("http://")?ip.substr(7):ip);
+        else formatted_address = std::format("wss://{}/cs2_webradar", ip);
+        if (formatted_address.rfind("wss://wss://",0)==0) formatted_address = formatted_address.substr(6);
+        if (formatted_address.rfind("wss://ws://",0)==0) formatted_address = "wss://" + formatted_address.substr(9);
+    } else formatted_address = std::format("ws://{}:22006/cs2_webradar", ip);
 
     static ix::WebSocket web_socket;
     std::mutex handshake_mutex;
