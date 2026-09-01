@@ -26,13 +26,13 @@ const SettingsButton = ({ settings, onSettingsChange }) => {
               <input
                 type="range"
                 min="0.8"
-                max="3.5"
+                max="5"
                 step="0.1"
                 value={settings.dotSize}
                 onChange={(e) => onSettingsChange({ ...settings, dotSize: parseFloat(e.target.value) })}
                 className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-radar-primary"
                 style={{
-                  background: `linear-gradient(to right, #b1d0e7 ${((settings.dotSize - 0.8) / 2.7) * 100}%, rgba(59, 130, 246, 0.2) ${((settings.dotSize - 0.8) / 2.7) * 100}%)`
+                  background: `linear-gradient(to right, #b1d0e7 ${((settings.dotSize - 0.8) / 4.2) * 100}%, rgba(59, 130, 246, 0.2) ${((settings.dotSize - 0.8) / 4.2) * 100}%)`
                 }}
               />
             </div>

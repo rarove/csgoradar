@@ -22,16 +22,10 @@ const loadSettings = () => {
   } catch { return DEFAULT_SETTINGS; }
 };
 
-const getStoredKey = () => {
-  try { return localStorage.getItem("radar_k") || ""; } catch { return ""; }
-};
 const isAuthorized = () => {
   if (!PRIVATE_KEY) return true;
   try {
     const urlK = new URL(window.location.href).searchParams.get("k");
-    if (urlK && urlK === PRIVATE_KEY) { try{ localStorage.setItem("radar_k", urlK); }catch{} return true; }
-    const stored = getStoredKey();
-    if (stored === PRIVATE_KEY) return true;
     return urlK === PRIVATE_KEY;
   } catch { return false; }
 };
@@ -119,9 +113,9 @@ const App = () => {
         <div className="bg-[#0f1f2f] border border-[#2a4a66] rounded-xl p-8 w-[90%] max-w-sm text-center shadow-2xl">
           <h1 className="text-xl font-bold text-[#b1d0e7] mb-2">🔒 Gizli Radar</h1>
           <p className="text-sm text-white/60 mb-4">Bu radar özel. Şifreyi gir.</p>
-          <input type="password" value={inputKey} onChange={e=>setInputKey(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ if(inputKey===PRIVATE_KEY){ try{localStorage.setItem("radar_k",inputKey);}catch{} setAuthorized(true); } else setLoginError("Hatalı şifre"); } }} placeholder="Şifre" className="w-full px-3 py-2 rounded bg-black/40 border border-white/20 text-white outline-none mb-2" />
+          <input type="password" value={inputKey} onChange={e=>setInputKey(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ if(inputKey===PRIVATE_KEY){ setAuthorized(true); const u=new URL(window.location.href); u.searchParams.set("k", inputKey); window.history.replaceState({}, "", u); } else setLoginError("Hatalı şifre"); } }} placeholder="Şifre" className="w-full px-3 py-2 rounded bg-black/40 border border-white/20 text-white outline-none mb-2" />
           {loginError && <p className="text-red-400 text-xs mb-2">{loginError}</p>}
-          <button onClick={()=>{ if(inputKey===PRIVATE_KEY){ try{localStorage.setItem("radar_k",inputKey);}catch{} setAuthorized(true); } else setLoginError("Hatalı şifre"); }} className="w-full py-2 rounded bg-[#6492b4] hover:bg-[#7aa8cb] text-white font-medium">Giriş</button>
+          <button onClick={()=>{ if(inputKey===PRIVATE_KEY){ setAuthorized(true); const u=new URL(window.location.href); u.searchParams.set("k", inputKey); window.history.replaceState({}, "", u); } else setLoginError("Hatalı şifre"); }} className="w-full py-2 rounded bg-[#6492b4] hover:bg-[#7aa8cb] text-white font-medium">Giriş</button>
           <p className="text-xs text-white/40 mt-3">Demo görmek istemiyorsan doğru şifre gerek.</p>
         </div>
       </div>
@@ -138,8 +132,8 @@ const App = () => {
         {bombData && bombData.m_blow_time > 0 && !bombData.m_is_defused && (
           <div className="absolute left-1/2 top-2 flex-col items-center gap-1 z-50"><div className="flex justify-center items-center gap-1"><MaskedIcon path={`./assets/icons/c4_sml.png`} height={32} color={(bombData.m_is_defusing && bombData.m_blow_time - bombData.m_defuse_time > 0 && `bg-radar-green`) || (bombData.m_blow_time - bombData.m_defuse_time < 0 && `bg-radar-red`) || `bg-radar-secondary`} /><span>{`${bombData.m_blow_time.toFixed(1)}s ${(bombData.m_is_defusing && `(${bombData.m_defuse_time.toFixed(1)}s)`) || ""}`}</span></div></div>
         )}
-        <div className="flex items-center justify-center gap-0 w-full h-full max-h-[92vh] overflow-hidden">
-          <ul id="terrorist" className="hidden 2xl:flex flex-col gap-1 m-0 p-0 shrink-0 scale-[0.62] origin-center overflow-hidden">
+        <div className="flex items-center justify-center gap-1 lg:gap-2 w-full h-full max-h-[92vh] overflow-hidden">
+          <ul id="terrorist" className="hidden lg:flex flex-col gap-1 m-0 p-0 shrink-0 scale-[0.55] xl:scale-[0.62] 2xl:scale-[0.68] origin-center overflow-hidden">
             {playerArray.filter((p) => p.m_team == 2).map((player) => (<PlayerCard isOnRightSide={false} key={player.m_idx} playerData={player} />))}
           </ul>
           <div className="flex-1 flex justify-center items-center min-w-0 h-full overflow-hidden">
@@ -147,12 +141,27 @@ const App = () => {
             <div id="radar" className="text-center p-6"><h1 className="text-lg">{status}</h1><p className="text-sm opacity-50 mt-1">Oyuna gir ve usermode.exe çalışsın</p></div>
           )}
           </div>
-          <ul id="counterTerrorist" className="hidden 2xl:flex flex-col gap-1 m-0 p-0 shrink-0 scale-[0.62] origin-center overflow-hidden">
+          <ul id="counterTerrorist" className="hidden lg:flex flex-col gap-1 m-0 p-0 shrink-0 scale-[0.55] xl:scale-[0.62] 2xl:scale-[0.68] origin-center overflow-hidden">
             {playerArray.filter((p) => p.m_team == 3).map((player) => (<PlayerCard isOnRightSide={true} key={player.m_idx} playerData={player} settings={settings} />))}
           </ul>
         </div>
-        <div className="2xl:hidden flex justify-center gap-3 mt-1 text-[10px] opacity-50">
-          <span>{playerArray.filter(p=>p.m_team==2).length}T</span><span>•</span><span>{playerArray.filter(p=>p.m_team==3).length}CT</span><span>• {mapData?.name||status}</span>
+        <div className="lg:hidden flex flex-col gap-2 mt-2 max-h-[18vh] overflow-y-auto">
+          <div className="flex gap-2 overflow-x-auto pb-1 px-2">
+            {playerArray.filter(p=>p.m_team==2).map(p=>(
+              <div key={p.m_idx} className="flex items-center gap-1 shrink-0 bg-black/30 rounded px-2 py-1 text-xs">
+                <span className="w-2 h-2 rounded-full" style={{background: p.m_is_local?'#facc15':'#ef4444'}}></span>
+                <span>{p.m_name}{p.m_is_local?' ★':''}</span><span className="opacity-60">{p.m_health}hp</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 px-2">
+            {playerArray.filter(p=>p.m_team==3).map(p=>(
+              <div key={p.m_idx} className="flex items-center gap-1 shrink-0 bg-black/30 rounded px-2 py-1 text-xs">
+                <span className="w-2 h-2 rounded-full" style={{background: p.m_is_local?'#facc15':'#22c55e'}}></span>
+                <span>{p.m_name}{p.m_is_local?' ★':''}</span><span className="opacity-60">{p.m_health}hp</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
