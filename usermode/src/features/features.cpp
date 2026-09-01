@@ -24,9 +24,10 @@ void f::get_map()
 	if (map_name.empty() || map_name.find("<empty>") != std::string::npos)
 	{
 		m_data["m_map"] = "invalid";
-
-		LOG_WARNING("failed to get map name! updating m_global_vars");
-		i::m_global_vars = m_memory->read_t<c_global_vars*>(m_memory->find_pattern(CLIENT_DLL, GET_GLOBAL_VARS)->rip().as<c_global_vars*>());
+		static int fail_count = 0;
+		if ((++fail_count % 50) == 0) {
+			i::m_global_vars = m_memory->read_t<c_global_vars*>(m_memory->find_pattern(CLIENT_DLL, GET_GLOBAL_VARS)->rip().as<c_global_vars*>());
+		}
 		return;
 	}
 

@@ -45,13 +45,13 @@ const SettingsButton = ({ settings, onSettingsChange }) => {
               <input
                 type="range"
                 min="0.5"
-                max="1.5"
+                max="5"
                 step="0.1"
                 value={settings.bombSize}
                 onChange={(e) => onSettingsChange({ ...settings, bombSize: parseFloat(e.target.value) })}
                 className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-radar-primary"
                 style={{
-                  background: `linear-gradient(to right, #b1d0e7 ${((settings.bombSize - 0.5) / 1) * 100}%, rgba(59, 130, 246, 0.2) ${((settings.bombSize - 0.5) / 1) * 100}%)`
+                  background: `linear-gradient(to right, #b1d0e7 ${((settings.bombSize - 0.5) / 4.5) * 100}%, rgba(59, 130, 246, 0.2) ${((settings.bombSize - 0.5) / 4.5) * 100}%)`
                 }}
               />
             </div>
