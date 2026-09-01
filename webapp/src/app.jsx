@@ -122,7 +122,6 @@ const App = () => {
           <input type="password" value={inputKey} onChange={e=>setInputKey(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ if(inputKey===PRIVATE_KEY){ setAuthorized(true); } else setLoginError("Hatalı şifre"); } }} placeholder="Şifre" className="w-full px-3 py-2 rounded bg-black/40 border border-white/20 text-white outline-none mb-2" />
           {loginError && <p className="text-red-400 text-xs mb-2">{loginError}</p>}
           <button onClick={()=>{ if(inputKey===PRIVATE_KEY){ setAuthorized(true); } else setLoginError("Hatalı şifre"); }} className="w-full py-2 rounded bg-[#6492b4] hover:bg-[#7aa8cb] text-white font-medium">Giriş</button>
-          <p className="text-xs text-white/40 mt-3">Demo görmek istemiyorsan doğru şifre gerek.</p>
         </div>
       </div>
     );
@@ -139,17 +138,20 @@ const App = () => {
           <div className="absolute left-1/2 top-2 flex-col items-center gap-1 z-50"><div className="flex justify-center items-center gap-1"><MaskedIcon path={`./assets/icons/c4_sml.png`} height={32} color={(bombData.m_is_defusing && bombData.m_blow_time - bombData.m_defuse_time > 0 && `bg-radar-green`) || (bombData.m_blow_time - bombData.m_defuse_time < 0 && `bg-radar-red`) || `bg-radar-secondary`} /><span>{`${bombData.m_blow_time.toFixed(1)}s ${(bombData.m_is_defusing && `(${bombData.m_defuse_time.toFixed(1)}s)`) || ""}`}</span></div></div>
         )}
         <div className="flex items-center justify-center gap-1 sm:gap-2 w-full h-full max-h-[92vh] overflow-hidden">
-          <ul id="terrorist" className="flex flex-col gap-1 sm:gap-2 m-0 p-0 shrink-0 scale-[0.42] sm:scale-[0.55] lg:scale-[0.68] xl:scale-[0.78] 2xl:scale-[0.85] origin-center overflow-hidden">
+          <ul id="terrorist" className="hidden sm:flex flex-col gap-1 sm:gap-2 m-0 p-0 shrink-0 scale-[0.55] lg:scale-[0.68] xl:scale-[0.78] 2xl:scale-[0.85] origin-center overflow-hidden">
             {playerArray.filter((p) => p.m_team == 2).map((player) => (<PlayerCard isOnRightSide={false} key={player.m_idx} playerData={player} />))}
           </ul>
           <div className="flex-1 flex justify-center items-center min-w-0 h-full overflow-hidden">
           {(playerArray.length > 0 && mapData && (<Radar playerArray={playerArray} radarImage={`./data/${mapData.name}/radar.png`} mapData={mapData} localTeam={localTeam} bombData={bombData} settings={settings} />)) || (
-            <div id="radar" className="text-center p-6"><h1 className="text-lg">{status}</h1><p className="text-sm opacity-50 mt-1">Oyuna gir ve usermode.exe çalışsın</p></div>
+            <div id="radar" className="text-center p-6"><h1 className="text-lg">{status}</h1></div>
           )}
           </div>
-          <ul id="counterTerrorist" className="flex flex-col gap-1 sm:gap-2 m-0 p-0 shrink-0 scale-[0.42] sm:scale-[0.55] lg:scale-[0.68] xl:scale-[0.78] 2xl:scale-[0.85] origin-center overflow-hidden">
+          <ul id="counterTerrorist" className="hidden sm:flex flex-col gap-1 sm:gap-2 m-0 p-0 shrink-0 scale-[0.55] lg:scale-[0.68] xl:scale-[0.78] 2xl:scale-[0.85] origin-center overflow-hidden">
             {playerArray.filter((p) => p.m_team == 3).map((player) => (<PlayerCard isOnRightSide={true} key={player.m_idx} playerData={player} settings={settings} />))}
           </ul>
+        </div>
+        <div className="sm:hidden flex justify-center gap-1 mt-2 text-[10px] opacity-40">
+          <span>{playerArray.filter(p=>p.m_team==2).length}T</span><span>•</span><span>{playerArray.filter(p=>p.m_team==3).length}CT</span><span>• {mapData?.name||status}</span>
         </div>
       </div>
     </div>
