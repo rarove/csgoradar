@@ -1,0 +1,28 @@
+name: build-usermode
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Setup vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg C:\vcpkg
+          C:\vcpkg\bootstrap-vcpkg.bat
+          C:\vcpkg\vcpkg integrate install
+      - name: Install deps
+        working-directory: usermode
+        run: C:\vcpkg\vcpkg install --triplet x64-windows
+      - name: Build usermode
+        working-directory: usermode
+        run: msbuild cs2_webradar.sln /p:Configuration=Release /p:Platform=x64
+      - name: Upload exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: usermode
+          path: usermode/x64/Release/usermode.exe

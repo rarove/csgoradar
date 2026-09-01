@@ -1,0 +1,19 @@
+﻿{
+  "client.dll": {
+    "dwCSGOInput": 37600368,
+    "dwEntityList": 39260704,
+    "dwGameEntitySystem": 39260704,
+    "dwGameEntitySystem_highestEntityIndex": 8336,
+    "dwGameRules": 37510440,
+    "dwGlobalVars": 34272752,
+    "dwLocalPlayerController": 37359408,
+    "dwLocalPlayerPawn": 37511784,
+    "dwPlantedC4": 37292568,
+    "dwViewMatrix": 37533744,
+    "dwViewAngles": 37602040,
+    "dwWeaponC4": 36957968
+  },
+  "engine2.dll": { "dwBuildNumber": 6354324 },
+  "_generated": "2026-09-01T00:00:00Z via a2x/cs2-dumper",
+  "_note": "usermode schema ile otomatik offset alir, bu dosya fallback icin"
+}
