@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: csgoradar-ws
+    env: node
+    plan: free
+    rootDir: webapp
+    buildCommand: npm install
+    startCommand: node ws/app.js
+    envVars:
+      - key: PORT
+        value: 10000

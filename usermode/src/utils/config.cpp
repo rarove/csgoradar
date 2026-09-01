@@ -9,7 +9,8 @@ bool cfg::setup(config_data_t& config_data)
 
 		std::ofstream example_config("config.json");
 		example_config << std::format("{}", R"({
-    "m_ip": "localhost"
+    "m_ip": "localhost",
+    "_comment": "or wss://csgoradar-ws.onrender.com/cs2_webradar or ngrok url"
 })");
 
 		return {};

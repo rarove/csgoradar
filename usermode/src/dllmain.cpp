@@ -11,7 +11,10 @@ bool main()
     ix::initNetSystem();
     LOG_INFO("winsock initialization completed");
 
-    const auto formatted_address = std::format("ws://{}:22006/cs2_webradar", config_data.m_ip);
+    std::string formatted_address;
+    if (config_data.m_ip.rfind("ws://",0)==0 || config_data.m_ip.rfind("wss://",0)==0) formatted_address = config_data.m_ip;
+    else if (config_data.m_ip.find(".onrender.com")!=std::string::npos || config_data.m_ip.find("ngrok")!=std::string::npos) formatted_address = std::format("wss://{}/cs2_webradar", config_data.m_ip);
+    else formatted_address = std::format("ws://{}:22006/cs2_webradar", config_data.m_ip);
 
     static ix::WebSocket web_socket;
     std::mutex handshake_mutex;

@@ -3,8 +3,10 @@ import http from "http";
 
 console.log("web_server started")
 
-const port = 22006;
-const server = http.createServer();
+const port = process.env.PORT || 22006;
+const server = http.createServer((req,res)=>{
+  if(req.url==="/"){ res.writeHead(200,{"Content-Type":"text/plain"}); res.end("cs2_webradar ws ok - connect to /cs2_webradar"); return; }
+});
 const web_socket_server = new WebSocketServer(
 {
     server: server, path: "/cs2_webradar"
