@@ -37,6 +37,6 @@ body {
 #terrorist::-webkit-scrollbar, #counterTerrorist::-webkit-scrollbar { display: none; }
 @media (orientation: landscape) and (max-height: 500px) {
   #radar { max-width: 62vh !important; max-height: 62vh !important; }
-  #terrorist { position: absolute !important; left: 0 !important; top: 50% !important; transform: translateY(-50%) scale(0.30) !important; transform-origin: left center !important; max-height: 96vh !important; gap: 2px !important; }
-  #counterTerrorist { position: absolute !important; right: 0 !important; top: 50% !important; transform: translateY(-50%) scale(0.30) !important; transform-origin: right center !important; max-height: 96vh !important; gap: 2px !important; }
+  #terrorist { position: absolute !important; left: 0 !important; top: 50% !important; transform: translateY(-50%) scale(0.26) !important; transform-origin: left center !important; max-height: 98vh !important; gap: 1px !important; }
+  #counterTerrorist { position: absolute !important; right: 0 !important; top: 50% !important; transform: translateY(-50%) scale(0.26) !important; transform-origin: right center !important; max-height: 98vh !important; gap: 1px !important; }
 }

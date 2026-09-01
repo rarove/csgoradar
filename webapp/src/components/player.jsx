@@ -52,7 +52,7 @@ const Player = ({ playerData, mapData, radarImage, localTeam, settings }) => {
       }}>
         <div className={`w-full h-full rounded-[50%_50%_50%_0%] rotate-[315deg] ${isLocal ? `ring-2 ring-yellow-300` : ``}`}
           style={{
-            backgroundColor: `${isLocal ? `#facc15` : (playerData.m_team == localTeam && playerColors[playerData.m_color]) || `red`}`,
+            backgroundColor: `${isLocal ? `#facc15` : playerData.m_team==2 ? `#ef4444` : playerData.m_team==3 ? `#3b82f6` : `red`}`,
             boxShadow: isLocal ? `0 0 10px 2px rgba(250,204,21,0.9)` : `0 0 3px rgba(0,0,0,0.6)`,
           }}
         />
