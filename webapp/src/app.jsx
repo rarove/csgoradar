@@ -151,7 +151,6 @@ const App = () => {
           </ul>
         </div>
         <div className="sm:hidden flex flex-col gap-1 mt-1 px-1 max-h-[30vh] overflow-y-auto">
-          <div className="text-[9px] opacity-50 px-1">T — {playerArray.filter(p=>p.m_team==2).length}</div>
           <div className="grid grid-cols-3 gap-1">
             {playerArray.filter(p=>p.m_team==2).map(p=>(
               <div key={p.m_idx} className="flex items-center gap-1 bg-black/40 rounded-md px-1 py-1 text-[10px] border border-white/10 overflow-hidden">
@@ -164,7 +163,6 @@ const App = () => {
               </div>
             ))}
           </div>
-          <div className="text-[9px] opacity-50 px-1">CT — {playerArray.filter(p=>p.m_team==3).length}</div>
           <div className="grid grid-cols-3 gap-1">
             {playerArray.filter(p=>p.m_team==3).map(p=>(
               <div key={p.m_idx} className="flex items-center gap-1 bg-black/40 rounded-md px-1 py-1 text-[10px] border border-white/10 overflow-hidden">
