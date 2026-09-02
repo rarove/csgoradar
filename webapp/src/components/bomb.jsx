@@ -10,10 +10,11 @@ const Bomb = ({ bombData, mapData, localTeam, settings }) => {
     <div className="absolute left-0 top-0 rounded-[100%]" style={{
       left: `${pos.x * 100}%`, top: `${pos.y * 100}%`,
       width: `${scaledSize}vw`, height: `${scaledSize}vw`,
-      transform: `translate(-50%, -50%)`,
+      transform: `translate3d(-50%, -50%, 0)`,
+      transition: `left 120ms linear, top 120ms linear`,
       backgroundColor: bg,
       WebkitMask: `url('./assets/icons/c4_sml.png') no-repeat center / contain`,
-      willChange: "transform",
+      willChange: "left, top",
     }} />
   );
 };

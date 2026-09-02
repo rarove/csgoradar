@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { getRadarPosition } from "../utilities/utilities";
 
 const rotationMap = new Map();
@@ -25,23 +25,27 @@ const Player = ({ playerData, mapData, settings }) => {
   const displayName = playerData.m_name || "";
   const bg = isLocal ? "#facc15" : playerData.m_team == 2 ? "#ef4444" : playerData.m_team == 3 ? "#3b82f6" : "red";
 
-  if (isDead && !deadPos && radarPos.x > 0) setDeadPos(radarPos);
-  if (!isDead && deadPos) setDeadPos(null);
+  useEffect(() => {
+    if (isDead && !deadPos && radarPos.x > 0) setDeadPos(radarPos);
+    else if (!isDead && deadPos) setDeadPos(null);
+  }, [isDead, radarPos.x, radarPos.y, deadPos]);
 
   return (
     <div className="absolute left-0 top-0" style={{
       left: `${pos.x * 100}%`,
       top: `${pos.y * 100}%`,
       width: `${scaled}vmin`, height: `${scaled}vmin`,
-      transform: `translate(-50%, -50%)`,
+      transform: `translate3d(-50%, -50%, 0)`,
+      transition: `left 120ms linear, top 120ms linear`,
       zIndex: isDead ? 0 : 1,
       opacity: invalid ? 0 : isDead ? 0.8 : 1,
-      willChange: "transform",
+      willChange: "left, top",
       WebkitMask: isDead ? `url('./assets/icons/icon-enemy-death_png.png') no-repeat center / contain` : `none`,
     }}>
       <div style={{
         transform: `rotate(${isDead ? 0 : rot}deg)`,
         width: `${scaled}vmin`, height: `${scaled}vmin`,
+        transition: `transform 120ms linear`,
       }}>
         <div className={`w-full h-full rounded-[50%_50%_50%_0%] rotate-[315deg] ${isLocal ? `ring-2 ring-yellow-300` : ``}`}
           style={{ backgroundColor: bg, boxShadow: isLocal ? `0 0 10px 2px rgba(250,204,21,0.9)` : `0 0 3px rgba(0,0,0,0.6)` }} />
@@ -53,4 +57,4 @@ const Player = ({ playerData, mapData, settings }) => {
     </div>
   );
 };
-export default Player;
+export default memo(Player);
