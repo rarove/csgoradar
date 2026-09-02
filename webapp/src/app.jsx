@@ -5,7 +5,7 @@ import Radar from "./components/radar";
 import SettingsButton from "./components/settings";
 import MaskedIcon from "./components/maskedicon";
 
-const CONNECTION_TIMEOUT = 2500;
+const CONNECTION_TIMEOUT = 7000;
 const WS_URL = import.meta.env.VITE_WS_URL || "";
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
 const PRIVATE_KEY = (import.meta.env.VITE_PRIVATE_KEY || "").trim();
@@ -112,7 +112,9 @@ const App = () => {
       };
     };
     connect();
-    return () => { cancelled = true; clearTimeout(timeout); try { ws && ws.close(); } catch {} };
+    const onVis = () => { if (document.visibilityState === "visible" && !cancelled) { try { if (!ws || ws.readyState !== 1) connect(); } catch {} } };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { cancelled = true; clearTimeout(timeout); document.removeEventListener("visibilitychange", onVis); try { ws && ws.close(); } catch {} };
   }, [authorized]);
 
   if (PRIVATE_KEY && !authorized) {
