@@ -25,12 +25,9 @@ const loadSettings = () => {
 const isAuthorized = () => {
   if (!PRIVATE_KEY) return true;
   try {
-    const saved = localStorage.getItem("radarAuth");
-    if (saved === PRIVATE_KEY) return true;
     const url = new URL(window.location.href);
     const urlK = url.searchParams.get("k");
     if (urlK === PRIVATE_KEY) {
-      localStorage.setItem("radarAuth", PRIVATE_KEY);
       url.searchParams.delete("k");
       window.history.replaceState({}, "", url.pathname + url.search + url.hash);
       return true;
@@ -95,15 +92,25 @@ const App = () => {
       try { ws = new WebSocket(url); } catch (e) { startDemo(`Bağlantı hatası: ${e.message}`); setTimeout(()=>{ if(!cancelled) connect(); }, 2000); return; }
       timeout = setTimeout(() => { try { ws.close(); } catch {} setStatus("Yeniden bağlanıyor..."); }, CONNECTION_TIMEOUT);
       ws.onopen = () => { clearTimeout(timeout); setStatus(hasData ? "Canlı" : "Canlı - veri bekleniyor..."); };
-      ws.onclose = () => { clearTimeout(timeout); if (cancelled) return; setStatus(hasData ? "Bağlantı koptu - yeniden bağlanıyor..." : "Bağlantı koptu"); setTimeout(()=>{ if(!cancelled) connect(); }, 800); };
+      ws.onclose = () => { clearTimeout(timeout); if (cancelled) return; setStatus(hasData ? "Bağlantı koptu - yeniden bağlanıyor..." : "Bağlantı koptu"); setTimeout(()=>{ if(!cancelled) connect(); }, 1500); };
       ws.onerror = () => { clearTimeout(timeout); setStatus(hasData ? "Bağlantı dalgalı - yeniden deneniyor..." : "WS hata"); };
       ws.onmessage = async (event) => {
-        const parsed = JSON.parse(await event.data.text());
-        hasData = true;
-        setPlayerArray(parsed.m_players || []);
-        setLocalTeam(parsed.m_local_team);
-        setBombData(parsed.m_bomb);
+        let parsed;
+        try { parsed = JSON.parse(await event.data.text()); } catch { return; }
         const map = parsed.m_map;
+        const players = parsed.m_players || [];
+        const isMatchOver = !map || map === "invalid" || players.length === 0;
+        if (isMatchOver) {
+          hasData = false;
+          setPlayerArray([]);
+          setBombData(null);
+          setStatus("Maç bitti - yeni maç bekleniyor...");
+          return;
+        }
+        hasData = true;
+        setPlayerArray(players);
+        setLocalTeam(parsed.m_local_team);
+        setBombData(parsed.m_bomb || null);
         if (map && map !== "invalid") {
           try {
             const jd = await (await fetch(`/data/${map}/data.json`)).json();
@@ -125,9 +132,9 @@ const App = () => {
         <div className="bg-[#0f1f2f] border border-[#2a4a66] rounded-xl p-8 w-[90%] max-w-sm text-center shadow-2xl">
           <h1 className="text-xl font-bold text-[#b1d0e7] mb-2">🔒 Gizli Radar</h1>
           <p className="text-sm text-white/60 mb-4">Bu radar özel. Şifreyi gir.</p>
-          <input type="password" value={inputKey} onChange={e=>setInputKey(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ if(inputKey===PRIVATE_KEY){ localStorage.setItem("radarAuth", PRIVATE_KEY); setAuthorized(true); } else setLoginError("Hatalı şifre"); } }} placeholder="Şifre" className="w-full px-3 py-2 rounded bg-black/40 border border-white/20 text-white outline-none mb-2" />
+          <input type="password" value={inputKey} onChange={e=>setInputKey(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ if(inputKey===PRIVATE_KEY){ setAuthorized(true); } else setLoginError("Hatalı şifre"); } }} placeholder="Şifre" className="w-full px-3 py-2 rounded bg-black/40 border border-white/20 text-white outline-none mb-2" />
           {loginError && <p className="text-red-400 text-xs mb-2">{loginError}</p>}
-          <button onClick={()=>{ if(inputKey===PRIVATE_KEY){ localStorage.setItem("radarAuth", PRIVATE_KEY); setAuthorized(true); } else setLoginError("Hatalı şifre"); }} className="w-full py-2 rounded bg-[#6492b4] hover:bg-[#7aa8cb] text-white font-medium">Giriş</button>
+          <button onClick={()=>{ if(inputKey===PRIVATE_KEY){ setAuthorized(true); } else setLoginError("Hatalı şifre"); }} className="w-full py-2 rounded bg-[#6492b4] hover:bg-[#7aa8cb] text-white font-medium">Giriş</button>
         </div>
       </div>
     );
