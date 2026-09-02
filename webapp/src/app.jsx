@@ -72,17 +72,16 @@ const App = () => {
   useEffect(() => {
     let ws = null;
     let timeout = null;
-    let demoTimer = null;
     let cancelled = false;
+    let hasData = false;
 
     const startDemo = async (msg) => {
       if (!authorized) {
         setStatus("Gizli");
-        setPlayerArray([]); setMapData(null);
         return;
       }
       if (msg) setStatus(msg); else setStatus("Canlı bekleniyor - oyuna gir...");
-      setPlayerArray([]); setMapData(null);
+      if (hasData) return;
       if (!DEMO_MODE) return;
     };
 
@@ -90,27 +89,30 @@ const App = () => {
       if (!authorized) { startDemo(); return; }
       const url = getWsUrl();
       if (!url) { startDemo(); return; }
-      try { ws = new WebSocket(url); } catch (e) { startDemo(`Bağlantı hatası: ${e.message}`); return; }
-      timeout = setTimeout(() => { try { ws.close(); } catch {} startDemo("Zaman aşımı - demo"); }, CONNECTION_TIMEOUT);
-      ws.onopen = () => { clearTimeout(timeout); setStatus("Canlı - veri bekleniyor..."); if (demoTimer) { clearInterval(demoTimer); demoTimer = null; } };
-      ws.onclose = () => { clearTimeout(timeout); setStatus("Bağlantı koptu"); setTimeout(()=>{ if(!cancelled) connect(); }, 800); };
-      ws.onerror = () => { clearTimeout(timeout); setStatus(`WS hata`); };
+      try { ws = new WebSocket(url); } catch (e) { startDemo(`Bağlantı hatası: ${e.message}`); setTimeout(()=>{ if(!cancelled) connect(); }, 2000); return; }
+      timeout = setTimeout(() => { try { ws.close(); } catch {} setStatus("Yeniden bağlanıyor..."); }, CONNECTION_TIMEOUT);
+      ws.onopen = () => { clearTimeout(timeout); setStatus(hasData ? "Canlı" : "Canlı - veri bekleniyor..."); };
+      ws.onclose = () => { clearTimeout(timeout); if (cancelled) return; setStatus(hasData ? "Bağlantı koptu - yeniden bağlanıyor..." : "Bağlantı koptu"); setTimeout(()=>{ if(!cancelled) connect(); }, 800); };
+      ws.onerror = () => { clearTimeout(timeout); setStatus(hasData ? "Bağlantı dalgalı - yeniden deneniyor..." : "WS hata"); };
       ws.onmessage = async (event) => {
         const parsed = JSON.parse(await event.data.text());
-        setPlayerArray(parsed.m_players);
+        hasData = true;
+        setPlayerArray(parsed.m_players || []);
         setLocalTeam(parsed.m_local_team);
         setBombData(parsed.m_bomb);
         const map = parsed.m_map;
         if (map && map !== "invalid") {
-          if (!mapData || mapData.name !== map) {
-            try { const jd = await (await fetch(`data/${map}/data.json`)).json(); setMapData({ ...jd, name: map }); document.body.style.backgroundImage = `url(./data/${map}/background.png)`; } catch {}
-          }
-        } else { setMapData(null); }
+          try {
+            const jd = await (await fetch(`data/${map}/data.json`)).json();
+            setMapData(prev => prev && prev.name === map ? prev : { ...jd, name: map });
+            document.body.style.backgroundImage = `url(./data/${map}/background.png)`;
+          } catch {}
+        }
         setStatus("Canlı");
       };
     };
     connect();
-    return () => { cancelled = true; clearTimeout(timeout); if (demoTimer) clearInterval(demoTimer); try { ws && ws.close(); } catch {} };
+    return () => { cancelled = true; clearTimeout(timeout); try { ws && ws.close(); } catch {} };
   }, [authorized]);
 
   if (PRIVATE_KEY && !authorized) {
@@ -131,7 +133,7 @@ const App = () => {
     <div className="w-screen h-screen flex flex-col overflow-hidden" style={{ background: `radial-gradient(50% 50% at 50% 50%, rgba(20, 40, 55, 0.95) 0%, rgba(7, 20, 30, 0.95) 100%)`, backdropFilter: `blur(7.5px)` }}>
       <div className="w-full h-full flex flex-col justify-center overflow-hidden relative p-1 lg:p-2">
         <div className="absolute right-2.5 top-2.5 z-50 flex items-center gap-2">
-          <span className="hidden lg:inline text-xs px-2 py-1 rounded bg-black/40 text-white/70">{status}</span>
+          <span className="hidden lg:inline text-xs px-2 py-1 rounded bg-black/40 text-white/70">{status === "Canlı" ? "● Canlı" : status}</span>
           <SettingsButton settings={settings} onSettingsChange={setSettings} />
         </div>
         {bombData && bombData.m_blow_time > 0 && !bombData.m_is_defused && (
@@ -142,8 +144,17 @@ const App = () => {
             {playerArray.filter((p) => p.m_team == 2).map((player) => (<PlayerCard isOnRightSide={false} key={player.m_idx} playerData={player} />))}
           </ul>
           <div className="flex-1 flex justify-center items-center min-w-0 h-full overflow-hidden">
-          {(playerArray.length > 0 && mapData && (<Radar playerArray={playerArray} radarImage={`./data/${mapData.name}/radar.png`} mapData={mapData} localTeam={localTeam} bombData={bombData} settings={settings} />)) || (
-            <div id="radar" className="text-center p-6"><h1 className="text-lg">{status}</h1></div>
+          {(playerArray.length > 0 && mapData) ? (
+            <div className="relative flex-1 flex justify-center items-center min-w-0 h-full overflow-hidden">
+              <Radar playerArray={playerArray} radarImage={`./data/${mapData.name}/radar.png`} mapData={mapData} localTeam={localTeam} bombData={bombData} settings={settings} />
+              {status !== "Canlı" && (
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/70 border border-white/20 text-white text-[10px] sm:text-xs whitespace-nowrap backdrop-blur pointer-events-none">
+                  {status}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div id="radar" className="flex flex-1 justify-center items-center min-w-0 h-full text-center p-6"><h1 className="text-lg animate-pulse">{status}</h1></div>
           )}
           </div>
           <ul id="counterTerrorist" className="hidden sm:flex flex-col gap-1 sm:gap-2 m-0 p-0 shrink-0 scale-[0.55] lg:scale-[0.68] xl:scale-[0.78] 2xl:scale-[0.85] origin-center overflow-hidden">
