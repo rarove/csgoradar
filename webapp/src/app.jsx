@@ -25,11 +25,14 @@ const loadSettings = () => {
 const isAuthorized = () => {
   if (!PRIVATE_KEY) return true;
   try {
+    const saved = localStorage.getItem("radarAuth");
+    if (saved === PRIVATE_KEY) return true;
     const url = new URL(window.location.href);
     const urlK = url.searchParams.get("k");
     if (urlK === PRIVATE_KEY) {
+      localStorage.setItem("radarAuth", PRIVATE_KEY);
       url.searchParams.delete("k");
-      window.history.replaceState({}, "", url.pathname + url.search);
+      window.history.replaceState({}, "", url.pathname + url.search + url.hash);
       return true;
     }
     return false;
@@ -123,9 +126,9 @@ const App = () => {
         <div className="bg-[#0f1f2f] border border-[#2a4a66] rounded-xl p-8 w-[90%] max-w-sm text-center shadow-2xl">
           <h1 className="text-xl font-bold text-[#b1d0e7] mb-2">🔒 Gizli Radar</h1>
           <p className="text-sm text-white/60 mb-4">Bu radar özel. Şifreyi gir.</p>
-          <input type="password" value={inputKey} onChange={e=>setInputKey(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ if(inputKey===PRIVATE_KEY){ setAuthorized(true); } else setLoginError("Hatalı şifre"); } }} placeholder="Şifre" className="w-full px-3 py-2 rounded bg-black/40 border border-white/20 text-white outline-none mb-2" />
+          <input type="password" value={inputKey} onChange={e=>setInputKey(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ if(inputKey===PRIVATE_KEY){ localStorage.setItem("radarAuth", PRIVATE_KEY); setAuthorized(true); } else setLoginError("Hatalı şifre"); } }} placeholder="Şifre" className="w-full px-3 py-2 rounded bg-black/40 border border-white/20 text-white outline-none mb-2" />
           {loginError && <p className="text-red-400 text-xs mb-2">{loginError}</p>}
-          <button onClick={()=>{ if(inputKey===PRIVATE_KEY){ setAuthorized(true); } else setLoginError("Hatalı şifre"); }} className="w-full py-2 rounded bg-[#6492b4] hover:bg-[#7aa8cb] text-white font-medium">Giriş</button>
+          <button onClick={()=>{ if(inputKey===PRIVATE_KEY){ localStorage.setItem("radarAuth", PRIVATE_KEY); setAuthorized(true); } else setLoginError("Hatalı şifre"); }} className="w-full py-2 rounded bg-[#6492b4] hover:bg-[#7aa8cb] text-white font-medium">Giriş</button>
         </div>
       </div>
     );
@@ -163,30 +166,38 @@ const App = () => {
             {playerArray.filter((p) => p.m_team == 3).map((player) => (<PlayerCard isOnRightSide={true} key={player.m_idx} playerData={player} settings={settings} />))}
           </ul>
         </div>
-        <div className="sm:hidden flex flex-col gap-1 mt-1 px-1 max-h-[30vh] overflow-y-auto">
-          <div className="grid grid-cols-3 gap-1">
-            {playerArray.filter(p=>p.m_team==2).map(p=>(
-              <div key={p.m_idx} className="flex items-center gap-1 bg-black/40 rounded-md px-1 py-1 text-[10px] border border-white/10 overflow-hidden">
-                <img src={`./assets/characters/${p.m_model_name||'tm_phoenix'}.png`} className="w-5 h-5 object-contain shrink-0 bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
-                <div className="flex flex-col leading-none min-w-0 flex-1">
-                  <span className="font-medium truncate text-[10px] leading-none">{p.m_name}{p.m_is_local?' ★':''}</span>
-                  <span className="opacity-60 text-[8px] leading-none">{p.m_health}hp • ${p.m_money||0}</span>
-                  <span className="opacity-70 text-[7px] leading-none truncate">{[p.m_weapons?.m_primary, p.m_weapons?.m_secondary].filter(Boolean).join(" • ")}{p.m_has_bomb?" • C4":""}</span>
+        <div className="sm:hidden flex flex-col gap-2 mt-1 px-1 max-h-[32vh] overflow-y-auto">
+          <div>
+            <div className="flex items-center gap-1 mb-1"><span className="w-2 h-2 rounded-full" style={{background:"#ef4444"}}></span><span className="text-[10px] font-bold tracking-widest" style={{color:"#ef4444"}}>TERRORIST</span><span className="text-[9px] opacity-50 ml-1">T</span></div>
+            <div className="grid grid-cols-3 gap-1">
+              {playerArray.filter(p=>p.m_team==2).map(p=>(
+                <div key={p.m_idx} className="flex items-center gap-1 rounded-md px-1 py-1 text-[10px] overflow-hidden" style={{background:"rgba(239,68,68,0.12)", border:"1px solid rgba(239,68,68,0.35)"}}>
+                  <img src={`./assets/characters/${p.m_model_name||'tm_phoenix'}.png`} className="w-5 h-5 object-contain shrink-0 bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                  <div className="flex flex-col leading-none min-w-0 flex-1">
+                    <span className="font-bold truncate text-[10px] leading-none" style={{color: p.m_is_local ? "#facc15" : "#fca5a5"}}>{p.m_name}{p.m_is_local?' ★':''}</span>
+                    <span className="opacity-70 text-[8px] leading-none" style={{color:"#fca5a5"}}>{p.m_health}hp • ${p.m_money||0}</span>
+                    <span className="opacity-60 text-[7px] leading-none truncate" style={{color:"#fca5a5"}}>{[p.m_weapons?.m_primary, p.m_weapons?.m_secondary].filter(Boolean).join(" • ")}{p.m_has_bomb?" • C4":""}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              {playerArray.filter(p=>p.m_team==2).length===0 && <span className="text-[9px] opacity-30 col-span-3">Oyuncu yok</span>}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-1">
-            {playerArray.filter(p=>p.m_team==3).map(p=>(
-              <div key={p.m_idx} className="flex items-center gap-1 bg-black/40 rounded-md px-1 py-1 text-[10px] border border-white/10 overflow-hidden">
-                <img src={`./assets/characters/${p.m_model_name||'ctm_sas'}.png`} className="w-5 h-5 object-contain shrink-0 bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
-                <div className="flex flex-col leading-none min-w-0 flex-1">
-                  <span className="font-medium truncate text-[10px] leading-none">{p.m_name}{p.m_is_local?' ★':''}</span>
-                  <span className="opacity-60 text-[8px] leading-none">{p.m_health}hp • ${p.m_money||0}</span>
-                  <span className="opacity-70 text-[7px] leading-none truncate">{[p.m_weapons?.m_primary, p.m_weapons?.m_secondary].filter(Boolean).join(" • ")}{p.m_has_defuser?" • kit":""}</span>
+          <div>
+            <div className="flex items-center gap-1 mb-1"><span className="w-2 h-2 rounded-full" style={{background:"#3b82f6"}}></span><span className="text-[10px] font-bold tracking-widest" style={{color:"#3b82f6"}}>COUNTER-TERRORIST</span><span className="text-[9px] opacity-50 ml-1">CT</span></div>
+            <div className="grid grid-cols-3 gap-1">
+              {playerArray.filter(p=>p.m_team==3).map(p=>(
+                <div key={p.m_idx} className="flex items-center gap-1 rounded-md px-1 py-1 text-[10px] overflow-hidden" style={{background:"rgba(59,130,246,0.12)", border:"1px solid rgba(59,130,246,0.35)"}}>
+                  <img src={`./assets/characters/${p.m_model_name||'ctm_sas'}.png`} className="w-5 h-5 object-contain shrink-0 bg-black/20 rounded" onError={e=>e.currentTarget.style.display='none'} />
+                  <div className="flex flex-col leading-none min-w-0 flex-1">
+                    <span className="font-bold truncate text-[10px] leading-none" style={{color: p.m_is_local ? "#facc15" : "#93c5fd"}}>{p.m_name}{p.m_is_local?' ★':''}</span>
+                    <span className="opacity-70 text-[8px] leading-none" style={{color:"#93c5fd"}}>{p.m_health}hp • ${p.m_money||0}</span>
+                    <span className="opacity-60 text-[7px] leading-none truncate" style={{color:"#93c5fd"}}>{[p.m_weapons?.m_primary, p.m_weapons?.m_secondary].filter(Boolean).join(" • ")}{p.m_has_defuser?" • kit":""}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+              {playerArray.filter(p=>p.m_team==3).length===0 && <span className="text-[9px] opacity-30 col-span-3">Oyuncu yok</span>}
+            </div>
           </div>
         </div>
       </div>
