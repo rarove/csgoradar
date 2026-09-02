@@ -25,8 +25,10 @@ void f::get_map()
 	{
 		m_data["m_map"] = "invalid";
 		static int fail_count = 0;
-		if ((++fail_count % 50) == 0) {
-			i::m_global_vars = m_memory->read_t<c_global_vars*>(m_memory->find_pattern(CLIENT_DLL, GET_GLOBAL_VARS)->rip().as<c_global_vars*>());
+		if ((++fail_count % 100) == 0) {
+			if (const auto pat = m_memory->find_pattern(CLIENT_DLL, GET_GLOBAL_VARS)) {
+				i::m_global_vars = m_memory->read_t<c_global_vars*>(pat->rip().as<c_global_vars*>());
+			}
 		}
 		return;
 	}
