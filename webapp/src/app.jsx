@@ -8,6 +8,7 @@ import MaskedIcon from "./components/maskedicon";
 const WS_URL = import.meta.env.VITE_WS_URL || "";
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
 const PRIVATE_KEY = (import.meta.env.VITE_PRIVATE_KEY || "").trim();
+const MAINTENANCE = (import.meta.env.VITE_MAINTENANCE || "").trim() === "true";
 
 const DEFAULT_SETTINGS = { dotSize: 2.4, bombSize: 0.8 };
 const loadSettings = () => {
@@ -173,6 +174,16 @@ const App = () => {
     };
   }, [authorized]);
 
+  if (MAINTENANCE) {
+    return (
+      <div className="w-screen h-screen flex items-center justify-center" style={{ background: `#0a1a2a` }}>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-2">Bakımda</h1>
+          <p className="text-white/60">Site geçici olarak kapalı.</p>
+        </div>
+      </div>
+    );
+  }
   if (PRIVATE_KEY && !authorized) {
     return (
       <div className="w-screen h-screen flex items-center justify-center" style={{ background: `radial-gradient(50% 50% at 50% 50%, rgba(20,40,55,0.95) 0%, rgba(7,20,30,0.95) 100%)` }}>

@@ -4,7 +4,8 @@ import { getRadarPosition } from "../utilities/utilities";
 const rotationMap = new Map();
 const getRotation = (key, target) => {
   const prev = rotationMap.get(key) ?? target;
-  const delta = ((target - prev + 540) % 360) - 180;
+  let delta = ((target - prev + 540) % 360) - 180;
+  if (Math.abs(delta) < 2) return prev;
   const next = (prev + delta * 0.35) % 360;
   rotationMap.set(key, next);
   return next;
