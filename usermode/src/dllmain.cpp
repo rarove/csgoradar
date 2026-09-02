@@ -33,6 +33,8 @@ bool main()
     std::this_thread::sleep_for(std::chrono::milliseconds(50 + rand() % 100));
 
     web_socket.setUrl(formatted_address);
+    web_socket.setPingInterval(25);
+    web_socket.enableAutomaticReconnection(true);
     web_socket.setOnMessageCallback([&](const ix::WebSocketMessagePtr& msg)
     {
         if (msg->type == ix::WebSocketMessageType::Open)
@@ -53,6 +55,10 @@ bool main()
             handshake_cv.notify_one();
             LOG_ERROR("failed to connect to the web socket ('%s')", formatted_address.c_str());
         }
+        else if (msg->type == ix::WebSocketMessageType::Close)
+        {
+            LOG_INFO("web socket closed, will auto-reconnect");
+        }
     });
     web_socket.start();
 
@@ -64,16 +70,28 @@ bool main()
     if (!connected)
     {
         std::this_thread::sleep_for(std::chrono::seconds(5));
-        return {};
+        web_socket.stop();
+        web_socket.start();
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
     for (;;)
     {
+        if (web_socket.getReadyState() != ix::ReadyState::Open)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            continue;
+        }
         sdk::update();
         f::run();
-        web_socket.send(f::m_data.dump());
+        if (f::m_data.empty()) f::m_data["m_map"] = "invalid";
+        auto res = web_socket.send(f::m_data.dump());
+        if (!res.success)
+        {
+            LOG_WARNING("send failed, will retry");
+        }
 
-        const int jitter = 20; // ±20ms jitter
+        const int jitter = 20;
         const auto delay = 100_ms + std::chrono::milliseconds(rand() % (jitter * 2) - jitter);
         std::this_thread::sleep_for(delay);
     }

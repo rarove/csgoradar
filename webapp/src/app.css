@@ -5,6 +5,7 @@
 @font-face {
   font-family: "TASAOrbiter";
   src: url("./assets/typefaces/TASAOrbiterVF.woff2");
+  font-display: swap;
 }
 
 :root {
@@ -20,8 +21,7 @@ body {
   margin: 0;
   font-family: "TASAOrbiter";
   color: var(--text-primary);
-  background-repeat: no-repeat;
-  background-size: cover;
+  background: #0a1a2a;
 }
 
 .banner-link {

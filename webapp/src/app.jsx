@@ -1,33 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./app.css";
 import PlayerCard from "./components/playercard";
 import Radar from "./components/radar";
 import SettingsButton from "./components/settings";
 import MaskedIcon from "./components/maskedicon";
 
-const CONNECTION_TIMEOUT = 7000;
 const WS_URL = import.meta.env.VITE_WS_URL || "";
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE !== "false";
 const PRIVATE_KEY = (import.meta.env.VITE_PRIVATE_KEY || "").trim();
 
-const DEFAULT_SETTINGS = {
-  dotSize: 2.4,
-  bombSize: 0.8,
-};
-
+const DEFAULT_SETTINGS = { dotSize: 2.4, bombSize: 0.8 };
 const loadSettings = () => {
-  try {
-    const saved = localStorage.getItem("radarSettings");
-    return saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
-  } catch { return DEFAULT_SETTINGS; }
+  try { const s = localStorage.getItem("radarSettings"); return s ? JSON.parse(s) : DEFAULT_SETTINGS; } catch { return DEFAULT_SETTINGS; }
 };
-
 const isAuthorized = () => {
   if (!PRIVATE_KEY) return true;
   try {
     const url = new URL(window.location.href);
-    const urlK = url.searchParams.get("k");
-    if (urlK === PRIVATE_KEY) {
+    const k = url.searchParams.get("k");
+    if (k === PRIVATE_KEY) {
       url.searchParams.delete("k");
       window.history.replaceState({}, "", url.pathname + url.search + url.hash);
       return true;
@@ -35,24 +26,11 @@ const isAuthorized = () => {
     return false;
   } catch { return false; }
 };
-
-const MOCK_DATA = {
-  m_map: "de_mirage",
-  m_local_team: 3,
-  m_bomb: { m_blow_time: 0, m_defuse_time: 0, m_is_defusing: false, m_is_defused: false, m_position: { x: 0, y: 0, z: 0 } },
-  m_players: [
-    { m_idx: 0, m_team: 2, m_health: 100, m_name: "T_Player1", m_position: { x: -800, y: 200, z: 0 }, m_yaw: 90, m_has_bomb: true, m_is_local: false },
-    { m_idx: 1, m_team: 2, m_health: 75, m_name: "T_Player2", m_position: { x: -600, y: -400, z: 0 }, m_yaw: 180, m_has_bomb: false, m_is_local: false },
-    { m_idx: 2, m_team: 3, m_health: 100, m_name: "CT_Player1", m_position: { x: 500, y: 800, z: 0 }, m_yaw: 270, m_has_bomb: false, m_is_local: true },
-    { m_idx: 3, m_team: 3, m_health: 45, m_name: "CT_Player2", m_position: { x: 300, y: -200, z: 0 }, m_yaw: 0, m_has_bomb: false, m_is_local: false },
-  ]
-};
-
 function getWsUrl() {
   if (WS_URL) return WS_URL;
   if (typeof window === "undefined") return null;
-  const host = window.location.hostname;
-  if (host === "localhost" || host === "127.0.0.1") return `ws://localhost:22006/cs2_webradar`;
+  const h = window.location.hostname;
+  if (h === "localhost" || h === "127.0.0.1") return `ws://localhost:22006/cs2_webradar`;
   return null;
 }
 
@@ -66,64 +44,133 @@ const App = () => {
   const [authorized, setAuthorized] = useState(isAuthorized());
   const [inputKey, setInputKey] = useState("");
   const [loginError, setLoginError] = useState("");
+  const mapRef = useRef();
+  mapRef.current = mapData;
+  const playersRef = useRef([]);
+  playersRef.current = playerArray;
 
-  useEffect(() => { localStorage.setItem("radarSettings", JSON.stringify(settings)); document.body.style.backgroundImage = ""; document.body.style.backgroundColor = "#0a1a2a"; }, [settings]);
+  useEffect(() => { localStorage.setItem("radarSettings", JSON.stringify(settings)); }, [settings]);
 
   useEffect(() => {
     let ws = null;
-    let timeout = null;
+    let handshakeTimer = null;
+    let reconnectTimer = null;
+    let heartbeatTimer = null;
+    let idleTimer = null;
     let cancelled = false;
     let hasData = false;
+    let attempt = 0;
+    let lastMsgAt = Date.now();
 
-    const startDemo = async (msg) => {
-      if (!authorized) {
-        setStatus("Gizli");
-        return;
-      }
-      if (msg) setStatus(msg); else setStatus("Canlı bekleniyor - oyuna gir...");
-      if (hasData) return;
-      if (!DEMO_MODE) return;
+    const scheduleReconnect = () => {
+      if (cancelled) return;
+      const delay = Math.min(1500 * Math.pow(1.5, attempt) + Math.random() * 500, 20000);
+      attempt++;
+      clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(() => { if (!cancelled) connect(); }, delay);
+    };
+
+    const startHeartbeat = () => {
+      clearInterval(heartbeatTimer);
+      clearInterval(idleTimer);
+      heartbeatTimer = setInterval(() => {
+        try { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ ping: 1 })); } catch {}
+      }, 25000);
+      idleTimer = setInterval(() => {
+        if (Date.now() - lastMsgAt > 15000 && ws && ws.readyState === 1) {
+          try { ws.close(); } catch {}
+        }
+      }, 5000);
     };
 
     const connect = async () => {
-      if (!authorized) { startDemo(); return; }
+      if (!authorized) { setStatus("Gizli"); return; }
       const url = getWsUrl();
-      if (!url) { startDemo(); return; }
-      try { ws = new WebSocket(url); } catch (e) { startDemo(`Bağlantı hatası: ${e.message}`); setTimeout(()=>{ if(!cancelled) connect(); }, 2000); return; }
-      timeout = setTimeout(() => { try { ws.close(); } catch {} setStatus("Yeniden bağlanıyor..."); }, CONNECTION_TIMEOUT);
-      ws.onopen = () => { clearTimeout(timeout); setStatus(hasData ? "Canlı" : "Canlı - veri bekleniyor..."); };
-      ws.onclose = () => { clearTimeout(timeout); if (cancelled) return; setStatus(hasData ? "Bağlantı koptu - yeniden bağlanıyor..." : "Bağlantı koptu"); setTimeout(()=>{ if(!cancelled) connect(); }, 1500); };
-      ws.onerror = () => { clearTimeout(timeout); setStatus(hasData ? "Bağlantı dalgalı - yeniden deneniyor..." : "WS hata"); };
+      if (!url) { setStatus("Canlı bekleniyor - oyuna gir..."); return; }
+      if (ws && (ws.readyState === 0 || ws.readyState === 1)) return;
+      try { ws = new WebSocket(url); } catch (e) {
+        setStatus(`Bağlantı hatası - yeniden deneniyor...`);
+        scheduleReconnect();
+        return;
+      }
+      const isFirst = !hasData;
+      clearTimeout(handshakeTimer);
+      handshakeTimer = setTimeout(() => {
+        try { ws.close(); } catch {}
+        setStatus(isFirst ? "Sunucu uyanıyor - bekleniyor..." : "Yeniden bağlanıyor...");
+      }, isFirst ? 25000 : 7000);
+
+      ws.onopen = () => {
+        clearTimeout(handshakeTimer);
+        attempt = 0;
+        lastMsgAt = Date.now();
+        setStatus(hasData ? "Canlı" : "Canlı - veri bekleniyor...");
+        startHeartbeat();
+      };
+      ws.onclose = () => {
+        clearTimeout(handshakeTimer);
+        clearInterval(heartbeatTimer);
+        clearInterval(idleTimer);
+        if (cancelled) return;
+        setStatus(hasData ? "Bağlantı koptu - yeniden bağlanıyor..." : "Bağlantı koptu");
+        scheduleReconnect();
+      };
+      ws.onerror = () => {
+        clearTimeout(handshakeTimer);
+        setStatus(hasData ? "Bağlantı dalgalı - yeniden deneniyor..." : "WS hata");
+        try { ws.close(); } catch {}
+      };
       ws.onmessage = async (event) => {
-        let parsed;
-        try { parsed = JSON.parse(await event.data.text()); } catch { return; }
-        const map = parsed.m_map;
-        const players = parsed.m_players || [];
-        const isMatchOver = !map || map === "invalid" || players.length === 0;
-        if (isMatchOver) {
-          hasData = false;
-          setPlayerArray([]);
-          setBombData(null);
-          setStatus("Maç bitti - yeni maç bekleniyor...");
-          return;
-        }
-        hasData = true;
-        setPlayerArray(players);
-        setLocalTeam(parsed.m_local_team);
-        setBombData(parsed.m_bomb || null);
-        if (map && map !== "invalid") {
+        lastMsgAt = Date.now();
+        let text;
+        try {
+          text = typeof event.data === "string" ? event.data : await event.data.text();
+          const parsed = JSON.parse(text);
+          const map = parsed.m_map;
+          const players = parsed.m_players;
+          const isInvalidMap = !map || map === "invalid";
+          if (isInvalidMap) {
+            hasData = false;
+            setPlayerArray([]);
+            setBombData(null);
+            setStatus("Maç bitti - yeni maç bekleniyor...");
+            return;
+          }
+          hasData = true;
+          attempt = 0;
+          setPlayerArray(Array.isArray(players) ? players : []);
+          setLocalTeam(parsed.m_local_team);
+          setBombData(parsed.m_bomb || null);
           try {
-            const jd = await (await fetch(`/data/${map}/data.json`)).json();
-            setMapData(prev => prev && prev.name === map ? prev : { ...jd, name: map });
+            const r = await fetch(`/data/${map}/data.json`);
+            if (r.ok) {
+              const jd = await r.json();
+              setMapData(prev => prev && prev.name === map ? prev : { ...jd, name: map });
+            }
           } catch {}
-        }
-        setStatus("Canlı");
+          setStatus("Canlı");
+        } catch {}
       };
     };
+
     connect();
-    const onVis = () => { if (document.visibilityState === "visible" && !cancelled) { try { if (!ws || ws.readyState !== 1) connect(); } catch {} } };
+    const onVis = () => { if (document.visibilityState === "visible" && !cancelled && (!ws || ws.readyState !== 1)) connect(); };
+    const onOnline = () => { attempt = 0; connect(); };
+    const onOffline = () => setStatus("Çevrimdışı - internet yok");
     document.addEventListener("visibilitychange", onVis);
-    return () => { cancelled = true; clearTimeout(timeout); document.removeEventListener("visibilitychange", onVis); try { ws && ws.close(); } catch {} };
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      cancelled = true;
+      clearTimeout(handshakeTimer);
+      clearTimeout(reconnectTimer);
+      clearInterval(heartbeatTimer);
+      clearInterval(idleTimer);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+      try { ws && ws.close(); } catch {}
+    };
   }, [authorized]);
 
   if (PRIVATE_KEY && !authorized) {
@@ -141,7 +188,7 @@ const App = () => {
   }
 
   return (
-    <div className="w-screen h-screen flex flex-col overflow-hidden" style={{ background: `radial-gradient(50% 50% at 50% 50%, rgba(20, 40, 55, 0.95) 0%, rgba(7, 20, 30, 0.95) 100%)`, backdropFilter: `blur(7.5px)` }}>
+    <div className="w-screen h-screen flex flex-col overflow-hidden" style={{ background: `radial-gradient(50% 50% at 50% 50%, rgba(20, 40, 55, 0.95) 0%, rgba(7, 20, 30, 0.95) 100%)` }}>
       <div className="w-full h-full flex flex-col justify-center overflow-hidden relative p-1 lg:p-2">
         <div className="absolute right-2.5 top-2.5 z-50 flex items-center gap-2">
           <span className="hidden lg:inline text-xs px-2 py-1 rounded bg-black/40 text-white/70">{status === "Canlı" ? "● Canlı" : status}</span>

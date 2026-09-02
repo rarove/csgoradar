@@ -1,9 +1,8 @@
 export const getRadarPosition = (mapData, entityCoords) => {
-  if (!entityCoords.x || !entityCoords.y) {
+  if (entityCoords == null || entityCoords.x == null || entityCoords.y == null) {
     return { x: 0, y: 0 };
   }
-
-  if (!mapData.x || !mapData.y) {
+  if (!mapData || mapData.x == null || mapData.y == null || mapData.scale == null) {
     return { x: 0, y: 0 };
   }
 
