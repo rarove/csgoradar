@@ -70,7 +70,7 @@ const App = () => {
   const [inputKey, setInputKey] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  useEffect(() => { localStorage.setItem("radarSettings", JSON.stringify(settings)); }, [settings]);
+  useEffect(() => { localStorage.setItem("radarSettings", JSON.stringify(settings)); document.body.style.backgroundImage = ""; document.body.style.backgroundColor = "#0a1a2a"; }, [settings]);
 
   useEffect(() => {
     let ws = null;
@@ -106,9 +106,8 @@ const App = () => {
         const map = parsed.m_map;
         if (map && map !== "invalid") {
           try {
-            const jd = await (await fetch(`data/${map}/data.json`)).json();
+            const jd = await (await fetch(`/data/${map}/data.json`)).json();
             setMapData(prev => prev && prev.name === map ? prev : { ...jd, name: map });
-            document.body.style.backgroundImage = `url(./data/${map}/background.png)`;
           } catch {}
         }
         setStatus("Canlı");
@@ -149,9 +148,9 @@ const App = () => {
             {playerArray.filter((p) => p.m_team == 2).map((player) => (<PlayerCard isOnRightSide={false} key={player.m_idx} playerData={player} />))}
           </ul>
           <div className="flex-1 flex justify-center items-center min-w-0 h-full overflow-hidden">
-          {(playerArray.length > 0 && mapData) ? (
+          {(mapData) ? (
             <div className="relative flex-1 flex justify-center items-center min-w-0 h-full overflow-hidden">
-              <Radar playerArray={playerArray} radarImage={`./data/${mapData.name}/radar.png`} mapData={mapData} localTeam={localTeam} bombData={bombData} settings={settings} />
+              <Radar playerArray={playerArray} radarImage={`/data/${mapData.name}/radar.png`} mapData={mapData} localTeam={localTeam} bombData={bombData} settings={settings} />
               {status !== "Canlı" && (
                 <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-black/70 border border-white/20 text-white text-[10px] sm:text-xs whitespace-nowrap backdrop-blur pointer-events-none">
                   {status}
