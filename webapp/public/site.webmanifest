@@ -1,0 +1,13 @@
+{
+  "name": "csgoradar",
+  "short_name": "csgoradar",
+  "description": "CS2 Web Radar - Premier live info",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ],
+  "theme_color": "#0a1a2a",
+  "background_color": "#0a1a2a",
+  "display": "standalone"
+}
